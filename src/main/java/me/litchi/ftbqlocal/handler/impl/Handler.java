@@ -12,6 +12,7 @@ import me.litchi.ftbqlocal.service.impl.JSONService;
 import me.litchi.ftbqlocal.utils.HandlerCounter;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
@@ -49,9 +50,15 @@ public class Handler implements FtbQHandler {
             chapter.title = "{" + prefix + ".title" + "}";
         }
         if(!chapter.subtitle.isEmpty()){
-            transKeys.put(prefix + ".subtitle", String.join("\n", chapter.subtitle));
-            chapter.subtitle.clear();
-            chapter.subtitle.add("{" + prefix + ".subtitle" + "}");
+            int num = 0;
+            List<String> subtitle = new ArrayList<>(chapter.subtitle);
+            for (String s : subtitle) {
+                String key = prefix + ".subtitle"+num;
+                transKeys.put(key, s);
+                chapter.subtitle.remove(s);
+                chapter.subtitle.add("{" + key+ "}");
+                num++;
+            }
         }
     }
 
