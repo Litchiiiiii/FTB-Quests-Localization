@@ -238,6 +238,17 @@ public class BackPortUtils implements FtbQHandler {
                 try {
                     if (desc.isBlank()) {
                         descList.add("");
+                    }
+                    else if(desc.contains("{@pagebreak}")){
+                        descList.add(desc);
+                    }
+                    else if(rich_desc_pattern.matcher(desc).find()){
+                        Pattern pattern = Pattern.compile("ftbquests\\.chapter\\.[a-zA-Z0-9_]+\\.quest\\d+\\.[a-zA-Z_]+description\\d");
+                        Matcher matcher = pattern.matcher(desc);
+                        while (matcher.find()){
+                            desc = desc.replace(matcher.group(0),enJson.get(matcher.group(0)).getAsString()).replace("translate","text");
+                        }
+                        descList.add(desc);
                     } else if (desc.contains("ftbquests")){
                         String key = desc.replaceAll("[{}]","");
                         descList.add(enJson.get(key).getAsString());
