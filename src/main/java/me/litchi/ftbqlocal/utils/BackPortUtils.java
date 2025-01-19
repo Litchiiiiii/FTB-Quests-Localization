@@ -15,56 +15,77 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
-import static me.litchi.ftbqlocal.commands.FTBQLangConvert.langStr;
+import static me.litchi.ftbqlocal.commands.FTBQLangConvert.originalLangCode;
 
 public class BackPortUtils implements FtbQHandler {
-    private static final String KUBEJS_LANG_DIR = Constants.PackMCMeta.GAMEDIR+"\\FTBLang\\backup\\"+Constants.PackMCMeta.KUBEJSFOLDER+"\\"+langStr+".json";
+    private static final String KUBEJS_LANG_DIR = Constants.PackMCMeta.GAMEDIR+"\\FTBLang\\backup\\"+Constants.PackMCMeta.KUBEJSFOLDER+"\\";
     private static final String RESOURCE_LANG_DIR = Constants.PackMCMeta.GAMEDIR+"\\resourcepacks\\"+Constants.PackMCMeta.PACKNAME;
     private static final Logger log = LoggerFactory.getLogger(BackPortUtils.class);
-    private static JsonObject enJSON = null;
+    private static JsonObject defaultJSON = null;
+    private static JsonObject enJson = null;
     private static final List<String> descList = new ArrayList<>();
     private static final BackPortUtils backportU = new BackPortUtils();
-    public static void backport(){
+    private static final String[] langList = {"en_us","zh_cn","zh_tw","zh_hk","de_de","es_es","fr_fr","ja_jp","ko_kr","ru_ru"};
+    public static void backport(String langStr){
+        try {
+            enJson =JsonParser.parseString(FileUtils.readFileToString(new File(KUBEJS_LANG_DIR+"en_us.json"), StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (IOException e) {
+            log.info("en_us.json is null");
+        }
+        defaultJSON = null;
         try {
             QuestFile questFile = FTBQuests.PROXY.getQuestFile(false);
-            File kubefile = new File(KUBEJS_LANG_DIR);
-            String en_us;
-            if (!kubefile.exists()){
-                try (ZipFile zipFile = new ZipFile(RESOURCE_LANG_DIR)){
-                    zipFile.stream().forEach(zipEntry -> {
-                        if (!zipEntry.isDirectory()){
-                            try {
-                                byte[] bytes = zipFile.getInputStream(zipEntry).readAllBytes();
-                                enJSON =JsonParser.parseString(new String(bytes)).getAsJsonObject();
-                            } catch (IOException e) {
-                                log.info("JsonFile error");
+                File kubefile = new File(KUBEJS_LANG_DIR + langStr +".json");
+                String defaultLang;
+                if (!kubefile.exists()){
+                    try (ZipFile zipFile = new ZipFile(RESOURCE_LANG_DIR)){
+                        zipFile.stream().forEach(zipEntry -> {
+                            if (!zipEntry.isDirectory()){
+                                try {
+                                    if (zipEntry.getName().equals(langStr+".json")){
+                                        byte[] bytes = zipFile.getInputStream(zipEntry).readAllBytes();
+                                        defaultJSON =JsonParser.parseString(new String(bytes)).getAsJsonObject();
+                                    }
+                                } catch (IOException e) {
+                                    log.info("JsonFile error");
+                                }
                             }
-                        }
-                    });
-                }catch (Exception e){
-                    log.info("ZIPFile error");
+                        });
+                    }catch (Exception e){
+                        log.info("ZIPFile error");
+                    }
+                } else {
+                    defaultLang = FileUtils.readFileToString(kubefile, StandardCharsets.UTF_8);
+                    defaultJSON =JsonParser.parseString(defaultLang).getAsJsonObject();
                 }
-            } else {
-                en_us = FileUtils.readFileToString(kubefile, StandardCharsets.UTF_8);
-                enJSON =JsonParser.parseString(en_us).getAsJsonObject();
-            }
-            if (enJSON == null){
-                throw new IOException();
-            }
-            backportU.handleRewardTables(questFile.rewardTables);
-            questFile.chapterGroups.forEach(backportU::handleChapterGroup);
-            questFile.getAllChapters().forEach(chapter -> {
-                backportU.handleChapter(chapter);
-                backportU.handleQuests(chapter.quests);
-            });
-            File output = new File(Constants.PackMCMeta.GAMEDIR, Constants.PackMCMeta.QUESTFOLDER);
-            questFile.writeDataFull(output.toPath());
-            ServerQuestFile.INSTANCE.save();
-            ServerQuestFile.INSTANCE.saveNow();
+                if (defaultJSON == null){
+                    if (!langStr.equals("en_us")){
+                        //defaultLang = FileUtils.readFileToString(new File(KUBEJS_LANG_DIR+"en_us.json"), StandardCharsets.UTF_8);
+                        defaultJSON = enJson;
+                    }else {
+                        throw new IOException();
+                    }
+                }
+                backportU.handleRewardTables(questFile.rewardTables);
+                questFile.chapterGroups.forEach(backportU::handleChapterGroup);
+                questFile.getAllChapters().forEach(chapter -> {
+                    backportU.handleChapter(chapter);
+                    backportU.handleQuests(chapter.quests);
+                });
+                File output = new File(Constants.PackMCMeta.GAMEDIR, Constants.PackMCMeta.QUESTFOLDER);
+                questFile.writeDataFull(output.toPath());
+                ServerQuestFile.INSTANCE.save();
+                ServerQuestFile.INSTANCE.saveNow();
+                if (langStr.equals(originalLangCode)){
+                    File questsFolder = new File(Constants.PackMCMeta.GAMEDIR, Constants.PackMCMeta.QUESTFOLDER);
+                    File parent = new File(Constants.PackMCMeta.GAMEDIR, Constants.PackMCMeta.OUTPUTFOLDER);
+                    if(questsFolder.exists()){
+                        File backup = new File(parent, Constants.PackMCMeta.BACKUPFOLDER);
+                        FileUtils.copyDirectory(questsFolder, backup);
+                    }
+                }
         } catch (IOException e) {
             log.info("This is first port!");
         }
@@ -74,8 +95,13 @@ public class BackPortUtils implements FtbQHandler {
     public void handleRewardTables(List<RewardTable> rewardTables) {
         rewardTables.forEach(rewardTable -> {
             try {
-                rewardTable.title = enJSON.get(rewardTable.title.replaceAll("[{}]","")).getAsString();
+                rewardTable.title = defaultJSON.get(rewardTable.title.replaceAll("[{}]","")).getAsString();
             }catch (Exception e){
+                try {
+                    rewardTable.title = enJson.get(rewardTable.title.replaceAll("[{}]","")).getAsString();
+                }catch (Exception e1){
+                    log.info("RewardTables is null");
+                }
                 log.info("RewardTables is null");
             }
         });
@@ -84,8 +110,13 @@ public class BackPortUtils implements FtbQHandler {
     @Override
     public void handleChapterGroup(ChapterGroup chapterGroup) {
         try {
-            chapterGroup.title = enJSON.get(chapterGroup.title.replaceAll("[{}]","")).getAsString();
+            chapterGroup.title = defaultJSON.get(chapterGroup.title.replaceAll("[{}]","")).getAsString();
         }catch (Exception e){
+            try {
+                chapterGroup.title = enJson.get(chapterGroup.title.replaceAll("[{}]","")).getAsString();
+            }catch (Exception e1){
+                log.info("ChapterGroup is null");
+            }
             log.info("ChapterGroup is null");
         }
     }
@@ -93,8 +124,25 @@ public class BackPortUtils implements FtbQHandler {
     @Override
     public void handleChapter(Chapter chapter) {
         try {
-            chapter.title=enJSON.get(chapter.title.replaceAll("[{}]","")).getAsString();
+            chapter.title= defaultJSON.get(chapter.title.replaceAll("[{}]","")).getAsString();
+            for (String s : chapter.subtitle) {
+                if (s.contains("{")){
+                    chapter.subtitle.remove(s);
+                }
+                chapter.subtitle.add(defaultJSON.get(s.replaceAll("[{}]", "")).getAsString());
+            }
         }catch (Exception e){
+            try {
+                chapter.title= enJson.get(chapter.title.replaceAll("[{}]","")).getAsString();
+                for (String s : chapter.subtitle) {
+                    if (s.contains("{")){
+                        chapter.subtitle.remove(s);
+                    }
+                    chapter.subtitle.add(enJson.get(s.replaceAll("[{}]", "")).getAsString());
+                }
+            }catch (Exception e1){
+                log.info("Chapter is null");
+            }
             log.info("Chapter is null");
         }
     }
@@ -104,30 +152,58 @@ public class BackPortUtils implements FtbQHandler {
         allQuests.forEach(quest -> {
             try {
                 try {
-                    quest.title = enJSON.get(quest.title.replaceAll("[{}]","")).getAsString();
+                    quest.title = defaultJSON.get(quest.title.replaceAll("[{}]","")).getAsString();
                 }catch (Exception e){
+                    try {
+                        quest.title = enJson.get(quest.title.replaceAll("[{}]","")).getAsString();
+                    }catch (Exception e1){
+                        log.info("questTitle is null");
+                    }
                     log.info("questTitle is null");
                 }
                 try {
-                    quest.subtitle = enJSON.get(quest.subtitle.replaceAll("[{}]","")).getAsString();
+                    quest.subtitle = defaultJSON.get(quest.subtitle.replaceAll("[{}]","")).getAsString();
                 }catch (Exception e){
+                    try{
+                        quest.subtitle = enJson.get(quest.subtitle.replaceAll("[{}]","")).getAsString();
+                    }catch (Exception e1){
+                        log.info("questSubtitle is null");
+                    }
                     log.info("questSubtitle is null");
                 }
                 quest.rewards
                         .stream()
                         .filter(reward -> !reward.title.isEmpty())
-                        .forEach(reward -> reward.title = enJSON.get(reward.title.replaceAll("[{}]","")).getAsString());
+                        .forEach(reward -> reward.title = defaultJSON.get(reward.title.replaceAll("[{}]","")).getAsString());
 
                 quest.tasks
                         .stream()
                         .filter(task -> !task.title.isEmpty())
-                        .forEach(task -> task.title = enJSON.get(task.title.replaceAll("[{}]","")).getAsString());
+                        .forEach(task -> task.title = defaultJSON.get(task.title.replaceAll("[{}]","")).getAsString());
                 List<String> rawDescription = quest.description;
                 handleQuestDescriptions(rawDescription);
                 quest.description.clear();
                 quest.description.addAll(descList);
                 descList.clear();
             }catch (Exception e){
+                try {
+                    quest.rewards
+                            .stream()
+                            .filter(reward -> !reward.title.isEmpty())
+                            .forEach(reward -> reward.title = enJson.get(reward.title.replaceAll("[{}]","")).getAsString());
+
+                    quest.tasks
+                            .stream()
+                            .filter(task -> !task.title.isEmpty())
+                            .forEach(task -> task.title = enJson.get(task.title.replaceAll("[{}]","")).getAsString());
+                    List<String> rawDescription = quest.description;
+                    handleQuestDescriptions(rawDescription);
+                    quest.description.clear();
+                    quest.description.addAll(descList);
+                    descList.clear();
+                }catch (Exception e1){
+                    log.info("quests is null");
+                }
                 log.info("quests is null");
             }
         });
@@ -139,11 +215,23 @@ public class BackPortUtils implements FtbQHandler {
                     descList.add("");
                 } else if (desc.contains("ftbquests")){
                     String key = desc.replaceAll("[{}]","");
-                    descList.add(enJSON.get(key).getAsString());
+                    descList.add(defaultJSON.get(key).getAsString());
                 } else {
                     descList.add(desc);
                 }
             }catch (Exception e){
+                try {
+                    if (desc.isBlank()) {
+                        descList.add("");
+                    } else if (desc.contains("ftbquests")){
+                        String key = desc.replaceAll("[{}]","");
+                        descList.add(enJson.get(key).getAsString());
+                    } else {
+                        descList.add(desc);
+                    }
+                }catch (Exception e1){
+                    log.info("rich_desc is null");
+                }
                 log.info("rich_desc is null");
             }
         });

@@ -9,6 +9,7 @@ import dev.ftb.mods.ftbquests.quest.task.Task;
 import me.litchi.ftbqlocal.handler.FtbQHandler;
 import me.litchi.ftbqlocal.utils.HandlerCounter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -44,9 +45,15 @@ public class Handler implements FtbQHandler {
             chapter.title = "{" + prefix + ".title" + "}";
         }
         if(!chapter.subtitle.isEmpty()){
-            transKeys.put(prefix + ".subtitle", String.join("\n", chapter.subtitle));
-            chapter.subtitle.clear();
-            chapter.subtitle.add("{" + prefix + ".subtitle" + "}");
+            int num = 0;
+            List<String> subtitle = new ArrayList<>(chapter.subtitle);
+            for (String s : subtitle) {
+                String key = prefix + ".subtitle"+num;
+                transKeys.put(key, s);
+                chapter.subtitle.remove(s);
+                chapter.subtitle.add("{" + key+ "}");
+                num++;
+            }
         }
     }
 
