@@ -51,15 +51,14 @@ public class Handler implements FtbQHandler {
             chapter.setRawTitle("{" + prefix + ".title" + "}");
         }
         if(!chapter.getRawSubtitle().isEmpty()){
-            transKeys.put(prefix + ".subtitle", String.join("\n", chapter.getRawSubtitle()));
-            try {
-                Field rawSubtitle = chapter.getClass().getDeclaredField("rawSubtitle");
-                rawSubtitle.setAccessible(true);
-                List<String> subTitleList = new ArrayList<>();
-                subTitleList.add("{" + prefix + ".subtitle" + "}");
-                rawSubtitle.set(chapter,subTitleList);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw new RuntimeException(e);
+            int num = 0;
+            List<String> subtitle = new ArrayList<>(chapter.getRawSubtitle());
+            for (String s : subtitle) {
+                String key = prefix + ".subtitle"+num;
+                transKeys.put(key, s);
+                chapter.getRawSubtitle().remove(s);
+                chapter.getRawSubtitle().add("{" + key+ "}");
+                num++;
             }
         }
     }

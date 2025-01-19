@@ -2,6 +2,7 @@ package me.litchi.ftbqlocal.utils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.zip.*;
 import com.google.gson.*;
 import org.apache.commons.io.FileUtils;
@@ -16,7 +17,9 @@ public class PackUtils {
         FileUtils.write(packMcMeta, jsonOutput, StandardCharsets.UTF_8);
 
         try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(outputName))) {
-            addToZip("assets\\minecraft\\lang\\", file, zipOut);
+            for (File listFile : Objects.requireNonNull(file.listFiles())) {
+                addToZip("assets\\minecraft\\lang\\", listFile, zipOut);
+            }
             addToZip("", packMcMeta, zipOut);
 
             System.out.println("Zip file created successfully!");
