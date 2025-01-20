@@ -19,8 +19,8 @@ public class Handler implements FtbQHandler {
     public void handleRewardTables(List<RewardTable> rewardTables) {
         rewardTables.forEach(rewardTable -> {
             HandlerCounter.addCounter();
-            transKeys.put("ftbquests.loot_table.title"+HandlerCounter.getCounter(), rewardTable.title);
-            rewardTable.title = "{" + "ftbquests.loot_table.title" + HandlerCounter.getCounter() + "}";
+            transKeys.put("ftbquests.loot_table_"+rewardTable.id+".title", rewardTable.title);
+            rewardTable.title = ("{" + "ftbquests.loot_table_"+rewardTable.id+".title"+ "}");
         });
         HandlerCounter.setCounter(0);
     }
@@ -29,8 +29,8 @@ public class Handler implements FtbQHandler {
     public void handleChapterGroup(ChapterGroup chapterGroup) {
         if(chapterGroup.getTitle() != null){
             if (!chapterGroup.title.isEmpty()){
-                transKeys.put("ftbquests.chapter_groups.title" + HandlerCounter.getCounter(), chapterGroup.title);
-                chapterGroup.title = "{" + "ftbquests.chapter_groups.title" + HandlerCounter.getCounter() + "}";
+                transKeys.put("ftbquests.chapter_groups_"+chapterGroup.id+".title", chapterGroup.title);
+                chapterGroup.title = "{" + "ftbquests.chapter_groups_"+chapterGroup.id+".title" + "}";
                 HandlerCounter.addCounter();
             }
         }
@@ -60,7 +60,7 @@ public class Handler implements FtbQHandler {
     private void handleTasks(List<Task> tasks) {
         tasks.stream().filter(task -> !task.title.isEmpty()).forEach(task -> {
             HandlerCounter.addCounter();
-            String textKey = HandlerCounter.getPrefix() + ".task.title" + HandlerCounter.getCounter();
+            String textKey = HandlerCounter.getPrefix() + ".task_"+task.id+".title";
             transKeys.put(textKey, task.title);
             task.title = "{"+textKey+"}";
         });
@@ -69,7 +69,7 @@ public class Handler implements FtbQHandler {
     private void handleRewards(List<Reward> rewards) {
         rewards.stream().filter(reward -> !reward.title.isEmpty()).forEach(reward -> {
             HandlerCounter.addCounter();
-            String textKey = HandlerCounter.getPrefix() + ".reward.title" + HandlerCounter.getCounter();
+            String textKey = HandlerCounter.getPrefix() + ".reward_"+reward.id+".title";
             transKeys.put(textKey, reward.title);
             reward.title = "{"+textKey+"}";
         });
