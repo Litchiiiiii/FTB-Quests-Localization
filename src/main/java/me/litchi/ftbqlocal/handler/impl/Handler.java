@@ -25,8 +25,8 @@ public class Handler implements FtbQHandler {
     public void handleRewardTables(List<RewardTable> rewardTables) {
         rewardTables.forEach(rewardTable -> {
             HandlerCounter.addCounter();
-            transKeys.put("ftbquests.loot_table.title"+HandlerCounter.getCounter(), rewardTable.getRawTitle());
-            rewardTable.setRawTitle("{" + "ftbquests.loot_table.title" + HandlerCounter.getCounter() + "}");
+            transKeys.put("ftbquests.loot_table_"+rewardTable.id+".title", rewardTable.getRawTitle());
+            rewardTable.setRawTitle("{" + "ftbquests.loot_table_"+rewardTable.id+".title"+ "}");
         });
         HandlerCounter.setCounter(0);
     }
@@ -35,8 +35,8 @@ public class Handler implements FtbQHandler {
     public void handleChapterGroup(ChapterGroup chapterGroup) {
         if(chapterGroup.getTitle() != null){
             if (!chapterGroup.getRawTitle().isEmpty()){
-                transKeys.put("ftbquests.chapter_groups.title" + HandlerCounter.getCounter(), chapterGroup.getRawTitle());
-                chapterGroup.setRawTitle("{" + "ftbquests.chapter_groups.title" + HandlerCounter.getCounter() + "}");
+                transKeys.put("ftbquests.chapter_groups_"+chapterGroup.id+".title", chapterGroup.getRawTitle());
+                chapterGroup.setRawTitle("{" + "ftbquests.chapter_groups_"+chapterGroup.id+".title" + "}");
                 HandlerCounter.addCounter();
             }
         }
@@ -69,11 +69,10 @@ public class Handler implements FtbQHandler {
             }
         }
     }
-
     private void handleTasks(List<Task> tasks) {
         tasks.stream().filter(task -> !task.getRawTitle().isEmpty()).forEach(task -> {
             HandlerCounter.addCounter();
-            String textKey = HandlerCounter.getPrefix() + ".task.title" + HandlerCounter.getCounter();
+            String textKey = HandlerCounter.getPrefix() + ".task_"+task.id+".title";
             transKeys.put(textKey, task.getRawTitle());
             task.setRawTitle("{"+textKey+"}");
         });
@@ -82,7 +81,7 @@ public class Handler implements FtbQHandler {
     private void handleRewards(List<Reward> rewards) {
         rewards.stream().filter(reward -> !reward.getRawTitle().isEmpty()).forEach(reward -> {
             HandlerCounter.addCounter();
-            String textKey = HandlerCounter.getPrefix() + ".reward.title" + HandlerCounter.getCounter();
+            String textKey = HandlerCounter.getPrefix() + ".reward_"+reward.id+".title";
             transKeys.put(textKey, reward.getRawTitle());
             reward.setRawTitle("{"+textKey+"}");
         });
@@ -120,6 +119,7 @@ public class Handler implements FtbQHandler {
         String rich_desc_regex = "\\s*[\\[\\{].*\"+.*[\\]\\}]\\s*";
         Pattern rich_desc_pattern = Pattern.compile(rich_desc_regex);
         descriptions.forEach(desc -> {
+
             if (desc.isBlank()) {
                 HandlerCounter.descList.add("");
             }
@@ -132,7 +132,7 @@ public class Handler implements FtbQHandler {
             else if(rich_desc_pattern.matcher(desc).find()){
                 HandlerCounter.addDescription();
                 Component parsedText = TextUtils.parseRawText(desc);
-                HandlerCounter.descList.add(handleJSON.handleJSON(parsedText));
+                handleJSON.handleJSON(parsedText);
             }
             else {
                 HandlerCounter.addDescription();

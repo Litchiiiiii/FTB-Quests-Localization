@@ -1,5 +1,7 @@
 package me.litchi.ftbqlocal.utils;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.ftb.mods.ftbquests.api.FTBQuestsAPI;
@@ -14,8 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
@@ -31,8 +32,10 @@ public class BackPortUtils implements FtbQHandler {
     private static JsonObject enJson = null;
     private static final List<String> descList = new ArrayList<>();
     private static final BackPortUtils backportU = new BackPortUtils();
-    private static final String[] langList = {"en_us","zh_cn","zh_tw","zh_hk","de_de","es_es","fr_fr","ja_jp","ko_kr","ru_ru"};
+    private static final Map<Long,List<String>> newdescMap = new HashMap<>();
+    private static final Map<Long,List<String>> chapterSubMap = new HashMap<>();
     public static void backport(String langStr){
+
         try {
             enJson =JsonParser.parseString(FileUtils.readFileToString(new File(KUBEJS_LANG_DIR+"en_us.json"), StandardCharsets.UTF_8)).getAsJsonObject();
         } catch (IOException e) {
@@ -41,6 +44,16 @@ public class BackPortUtils implements FtbQHandler {
         defaultJSON = null;
         try {
             BaseQuestFile questFile = FTBQuestsAPI.api().getQuestFile(false);
+            if (langStr.equals("en_us")){
+                newdescMap.clear();
+                chapterSubMap.clear();
+                questFile.forAllQuests(quest -> {
+                    newdescMap.put(quest.id,new ArrayList<>(quest.getRawDescription()));
+                });
+                questFile.forAllChapters(chapter -> {
+                    chapterSubMap.put(chapter.id,new ArrayList<>(chapter.getRawSubtitle()));
+                });
+            }
             File kubefile = new File(KUBEJS_LANG_DIR + langStr +".json");
             String defaultLang;
             if (!kubefile.exists()){
@@ -104,57 +117,66 @@ public class BackPortUtils implements FtbQHandler {
                 try {
                     rewardTable.setRawTitle(enJson.get(rewardTable.getRawTitle().replaceAll("[{}]","")).getAsString());
                 }catch (Exception e1){
-                    log.info("RewardTables is null");
+                    log.info("rewardTable title is not in kubejs!");
                 }
-                log.info("RewardTables is null");
             }
         });
     }
 
     @Override
     public void handleChapterGroup(ChapterGroup chapterGroup) {
-        try {
-            chapterGroup.setRawTitle(defaultJSON.get(chapterGroup.getRawTitle().replaceAll("[{}]","")).getAsString());
-        }catch (Exception e){
+        if (chapterGroup.getRawTitle().contains("{")){
             try {
-                chapterGroup.setRawTitle(enJson.get(chapterGroup.getRawTitle().replaceAll("[{}]","")).getAsString());
-            }catch (Exception e1){
-                log.info("ChapterGroup is null");
+                chapterGroup.setRawTitle(defaultJSON.get(chapterGroup.getRawTitle().replaceAll("[{}]","")).getAsString());
+            }catch (Exception e){
+                try {
+                    chapterGroup.setRawTitle(enJson.get(chapterGroup.getRawTitle().replaceAll("[{}]","")).getAsString());
+                }catch (Exception e1){
+                    log.info("ChapterGroup title is not in kubejs!");
+                }
             }
-            log.info("ChapterGroup is null");
         }
     }
 
     @Override
     public void handleChapter(Chapter chapter) {
         try {
-            chapter.setRawTitle(defaultJSON.get(chapter.getRawTitle().replaceAll("[{}]","")).getAsString());
+            if (chapter.getRawTitle().contains("{")){
+                try {
+                    chapter.setRawTitle(defaultJSON.get(chapter.getRawTitle().replaceAll("[{}]","")).getAsString());
+                }catch (Exception e){
+                    try {
+                        chapter.setRawTitle(enJson.get(chapter.getRawTitle().replaceAll("[{}]","")).getAsString());
+                    }catch (Exception e1){
+                        log.info("chapter title is not in kubejs!");
+                    }
+                }
+            }
             Field rawSubtitle = chapter.getClass().getDeclaredField("rawSubtitle");
             rawSubtitle.setAccessible(true);
-            List<String> subtitle = new ArrayList<>(chapter.getRawSubtitle());
+            //List<String> subtitle = new ArrayList<>(chapter.getRawSubtitle());
+            List<String> subtitle = new ArrayList<>(chapterSubMap.get(chapter.id));
             List<String> subtitleList = new ArrayList<>();
             for (String s : subtitle) {
                 if (s.contains("{")){
-                    subtitleList.add(defaultJSON.get(s.replaceAll("[{}]", "")).getAsString());
-                }
-            }
-            rawSubtitle.set(chapter,subtitleList);
-        }catch (Exception e){
-            try {
-                chapter.setRawTitle(enJson.get(chapter.getRawTitle().replaceAll("[{}]","")).getAsString());
-                Field rawSubtitle = chapter.getClass().getDeclaredField("rawSubtitle");
-                rawSubtitle.setAccessible(true);
-                List<String> subtitle = new ArrayList<>(chapter.getRawSubtitle());
-                List<String> subtitleList = new ArrayList<>();
-                for (String s : subtitle) {
-                    if (s.contains("{")){
-                        subtitleList.add(enJson.get(s.replaceAll("[{}]", "")).getAsString());
+                    String key = s.replaceAll("[{}]", "");
+                    try {
+                        subtitleList.add(defaultJSON.get(key).getAsString());
+                    }catch (Exception e){
+                        try {
+                            subtitleList.add(enJson.get(key).getAsString());
+                        }catch (Exception e1){
+                            log.info("chaptSubtitle is not in kubejs!");
+                        }
                     }
+                }else {
+                    subtitleList.add(s);
                 }
-                rawSubtitle.set(chapter,subtitleList);
-            }catch (Exception e1){
-                log.info(e1.getMessage());
             }
+            if (!subtitleList.isEmpty()){
+                rawSubtitle.set(chapter,subtitleList);
+            }
+        }catch (Exception e){
             log.info(e.getMessage());
         }
     }
@@ -162,113 +184,106 @@ public class BackPortUtils implements FtbQHandler {
     @Override
     public void handleQuests(List<Quest> allQuests) {
         allQuests.forEach(quest -> {
-            try {
+            if (quest.getRawTitle().contains("{")){
                 try {
                     quest.setRawTitle(defaultJSON.get(quest.getRawTitle().replaceAll("[{}]","")).getAsString());
                 }catch (Exception e){
                     try {
                         quest.setRawTitle(enJson.get(quest.getRawTitle().replaceAll("[{}]","")).getAsString());
                     }catch (Exception e1){
-                        log.info("questTitle is null");
+                        log.info("questTitle is not in kubejs!");
                     }
-                    log.info("questTitle is null");
                 }
+            }
+            if (quest.getRawSubtitle().contains("{")){
                 try {
                     quest.setRawSubtitle(defaultJSON.get(quest.getRawSubtitle().replaceAll("[{}]","")).getAsString());
                 }catch (Exception e){
                     try{
                         quest.setRawSubtitle(enJson.get(quest.getRawSubtitle().replaceAll("[{}]","")).getAsString());
                     }catch (Exception e1){
-                        log.info("questSubtitle is null");
+                        log.info("questSubtitle is not in kubejs!");
                     }
-                    log.info("questSubtitle is null");
                 }
+            }
+            try {
                 quest.getRewards()
                         .stream()
-                        .filter(reward -> !reward.getRawTitle().isEmpty())
+                        .filter(reward -> !reward.getRawTitle().isEmpty() && reward.getRawTitle().contains("{"))
                         .forEach(reward -> reward.setRawTitle(defaultJSON.get(reward.getRawTitle().replaceAll("[{}]","")).getAsString()));
-
-                quest.getTasksAsList()
-                        .stream()
-                        .filter(task -> !task.getRawTitle().isEmpty())
-                        .forEach(task -> task.setRawTitle(defaultJSON.get(task.getRawTitle().replaceAll("[{}]","")).getAsString()));
-                List<String> rawDescription = quest.getRawDescription();
-                handleQuestDescriptions(rawDescription);
-                quest.getRawDescription().clear();
-                quest.getRawDescription().addAll(descList);
-                descList.clear();
             }catch (Exception e){
                 try {
                     quest.getRewards()
                             .stream()
-                            .filter(reward -> !reward.getRawTitle().isEmpty())
+                            .filter(reward -> !reward.getRawTitle().isEmpty() && reward.getRawTitle().contains("{"))
                             .forEach(reward -> reward.setRawTitle(enJson.get(reward.getRawTitle().replaceAll("[{}]","")).getAsString()));
-                    quest.getTasksAsList()
-                            .stream()
-                            .filter(task -> !task.getRawTitle().isEmpty())
-                            .forEach(task -> task.setRawTitle(enJson.get(task.getRawTitle().replaceAll("[{}]","")).getAsString()));
-                    List<String> rawDescription = quest.getRawDescription();
-                    handleQuestDescriptions(rawDescription);
-                    quest.getRawDescription().clear();
-                    quest.getRawDescription().addAll(descList);
-                    descList.clear();
                 }catch (Exception e1){
-                    log.info("quests is null");
+                    log.info("questReward title is not in kubejs!");
                 }
-                log.info("quests is null");
             }
-        });
-    }
-    private void handleQuestDescriptions(List<String> descriptions) {
-        String rich_desc_regex = "\\s*[\\[{].*\"+.*[]}]\\s*";
-        Pattern rich_desc_pattern = Pattern.compile(rich_desc_regex);
-        descriptions.forEach(desc -> {
             try {
-                if (desc.isBlank()) {
-                    descList.add("");
-                }
-                else if(desc.contains("{@pagebreak}")){
-                    descList.add(desc);
-                }
-                else if(rich_desc_pattern.matcher(desc).find()){
-                    Pattern pattern = Pattern.compile("ftbquests\\.chapter\\.[a-zA-Z0-9_]+\\.quest\\d+\\.[a-zA-Z_]+description\\d");
-                    Matcher matcher = pattern.matcher(desc);
-                    while (matcher.find()){
-                        desc = desc.replace(matcher.group(0),defaultJSON.get(matcher.group(0)).getAsString()).replace("translate","text");
-                    }
-                    descList.add(desc);
-                } else if (desc.contains("ftbquests")){
-                    String key = desc.replaceAll("[{}]","");
-                    descList.add(defaultJSON.get(key).getAsString());
-                } else {
-                    descList.add(desc);
-                }
+                quest.getTasksAsList()
+                        .stream()
+                        .filter(task -> !task.getRawTitle().isEmpty() && task.getRawTitle().contains("{"))
+                        .forEach(task -> task.setRawTitle(defaultJSON.get(task.getRawTitle().replaceAll("[{}]","")).getAsString()));
             }catch (Exception e){
                 try {
-                    if (desc.isBlank()) {
-                        descList.add("");
-                    }
-                    else if(desc.contains("{@pagebreak}")){
-                        descList.add(desc);
-                    }
-                    else if(rich_desc_pattern.matcher(desc).find()){
-                        Pattern pattern = Pattern.compile("ftbquests\\.chapter\\.[a-zA-Z0-9_]+\\.quest\\d+\\.[a-zA-Z_]+description\\d");
-                        Matcher matcher = pattern.matcher(desc);
-                        while (matcher.find()){
-                            desc = desc.replace(matcher.group(0),enJson.get(matcher.group(0)).getAsString()).replace("translate","text");
-                        }
-                        descList.add(desc);
-                    } else if (desc.contains("ftbquests")){
-                        String key = desc.replaceAll("[{}]","");
-                        descList.add(enJson.get(key).getAsString());
-                    } else {
-                        descList.add(desc);
-                    }
+                    quest.getTasksAsList()
+                            .stream()
+                            .filter(task -> !task.getRawTitle().isEmpty()  && task.getRawTitle().contains("{"))
+                            .forEach(task -> task.setRawTitle(enJson.get(task.getRawTitle().replaceAll("[{}]","")).getAsString()));
                 }catch (Exception e1){
-                    log.info("rich_desc is null");
+                    log.info("questReward title is not in kubejs!");
                 }
-                log.info("rich_desc is null");
             }
+            //List<String> rawDescription = quest.getRawDescription();
+            handleQuestDescriptions(quest.id);
+            quest.getRawDescription().clear();
+            quest.getRawDescription().addAll(descList);
+            descList.clear();
         });
+    }
+    private void handleQuestDescriptions(long id) {
+        String rich_desc_regex = "\\s*[\\[{].*\"+.*[]}]\\s*";
+        Pattern rich_desc_pattern = Pattern.compile(rich_desc_regex);
+        List<String> newDescList = new ArrayList<>(newdescMap.get(id));
+        for (String s : newDescList) {
+            if (s.isBlank()) {
+                descList.add("");
+            } else if(s.contains("{@pagebreak}")){
+                descList.add(s);
+            }
+            if(rich_desc_pattern.matcher(s).find()){
+                Pattern pattern = Pattern.compile("ftbquests\\.chapter\\.[a-zA-Z0-9_]+\\.quest\\d+\\.[a-zA-Z_]+description\\d");
+                Matcher matcher = pattern.matcher(s);
+                while (matcher.find()){
+                    try {
+                        s = s.replace(matcher.group(0),defaultJSON.get(matcher.group(0)).getAsString()).replace("translate","text");
+                    }catch (Exception e){
+                        try {
+                            s = s.replace(matcher.group(0),enJson.get(matcher.group(0)).getAsString()).replace("translate","text");
+                        }catch (Exception e1){
+                            log.info(e1.getMessage());
+                        }
+                    }
+                }
+                descList.add(s);
+            } else if (s.contains("ftbquests")){
+                if (s.contains("{")){
+                    String key = s.replaceAll("[{}]","");
+                    try {
+                        descList.add(defaultJSON.get(key).getAsString());
+                    }catch (Exception e){
+                        try {
+                            descList.add(enJson.get(key).getAsString());
+                        }catch (Exception e1){
+                            log.info(e1.getMessage());
+                        }
+                    }
+                }
+            } else if (!s.isBlank() && !s.contains("{@pagebreak}")){
+                descList.add(s);
+            }
+        }
     }
 }
