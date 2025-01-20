@@ -12,6 +12,7 @@ import me.litchi.ftbqlocal.service.impl.JSONService;
 import me.litchi.ftbqlocal.utils.HandlerCounter;
 import net.minecraft.network.chat.Component;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -24,8 +25,8 @@ public class Handler implements FtbQHandler {
     public void handleRewardTables(List<RewardTable> rewardTables) {
         rewardTables.forEach(rewardTable -> {
             HandlerCounter.addCounter();
-            transKeys.put("ftbquests.loot_table.title"+HandlerCounter.getCounter(), rewardTable.title);
-            rewardTable.title = "{" + "ftbquests.loot_table.title" + HandlerCounter.getCounter() + "}";
+            transKeys.put("ftbquests.loot_table_"+rewardTable.id+".title", rewardTable.title);
+            rewardTable.title=("{" + "ftbquests.loot_table_"+rewardTable.id+".title"+ "}");
         });
         HandlerCounter.setCounter(0);
     }
@@ -34,8 +35,8 @@ public class Handler implements FtbQHandler {
     public void handleChapterGroup(ChapterGroup chapterGroup) {
         if(chapterGroup.getTitle() != null){
             if (!chapterGroup.title.isEmpty()){
-                transKeys.put("ftbquests.chapter_groups.title" + HandlerCounter.getCounter(), chapterGroup.title);
-                chapterGroup.title = "{" + "ftbquests.chapter_groups.title" + HandlerCounter.getCounter() + "}";
+                transKeys.put("ftbquests.chapter_groups_"+chapterGroup.id+".title", chapterGroup.title);
+                chapterGroup.title=("{" + "ftbquests.chapter_groups_"+chapterGroup.id+".title" + "}");
                 HandlerCounter.addCounter();
             }
         }
@@ -47,36 +48,42 @@ public class Handler implements FtbQHandler {
         String prefix = HandlerCounter.getPrefix();
         if(chapter.getTitle() != null){
             transKeys.put(prefix + ".title", chapter.title);
-            chapter.title = "{" + prefix + ".title" + "}";
+            chapter.title=("{" + prefix + ".title" + "}");
         }
-        if(!chapter.subtitle.isEmpty()){
+        if(!chapter.subtitle.isEmpty()) {
             int num = 0;
-            List<String> subtitle = new ArrayList<>(chapter.subtitle);
-            for (String s : subtitle) {
-                String key = prefix + ".subtitle"+num;
-                transKeys.put(key, s);
-                chapter.subtitle.remove(s);
-                chapter.subtitle.add("{" + key+ "}");
-                num++;
+            try{
+                Field rawSubtitle = chapter.getClass().getDeclaredField("rawSubtitle");
+                rawSubtitle.setAccessible(true);
+                List<String> subtitle = new ArrayList<>(chapter.subtitle);
+                List<String> rawSubList = new ArrayList<>();
+                for (String s : subtitle) {
+                    String key = prefix + ".subtitle" + num;
+                    transKeys.put(key, s);
+                    rawSubList.add("{" + key + "}");
+                    rawSubtitle.set(chapter,rawSubList);
+                    num++;
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw new RuntimeException(e);
             }
         }
     }
-
     private void handleTasks(List<Task> tasks) {
         tasks.stream().filter(task -> !task.title.isEmpty()).forEach(task -> {
             HandlerCounter.addCounter();
-            String textKey = HandlerCounter.getPrefix() + ".task.title" + HandlerCounter.getCounter();
+            String textKey = HandlerCounter.getPrefix() + ".task_"+task.id+".title";
             transKeys.put(textKey, task.title);
-            task.title = "{"+textKey+"}";
+            task.title=("{"+textKey+"}");
         });
         HandlerCounter.setCounter(0);
     }
     private void handleRewards(List<Reward> rewards) {
         rewards.stream().filter(reward -> !reward.title.isEmpty()).forEach(reward -> {
             HandlerCounter.addCounter();
-            String textKey = HandlerCounter.getPrefix() + ".reward.title" + HandlerCounter.getCounter();
+            String textKey = HandlerCounter.getPrefix() + ".reward_"+reward.id+".title";
             transKeys.put(textKey, reward.title);
-            reward.title = "{"+textKey+"}";
+            reward.title=("{"+textKey+"}");
         });
         HandlerCounter.setCounter(0);
     }
@@ -90,12 +97,12 @@ public class Handler implements FtbQHandler {
             if(quest.getTitle() != null){
                 if (!quest.title.isEmpty()){
                     transKeys.put(prefix + ".title", quest.title);
-                    quest.title = "{" + prefix + ".title" + "}";
+                    quest.title=("{" + prefix + ".title" + "}");
                 }
             }
             if(!quest.subtitle.isEmpty()){
                 transKeys.put(prefix + ".subtitle", quest.subtitle);
-                quest.subtitle = "{" + prefix + ".subtitle" + "}";
+                quest.subtitle=("{" + prefix + ".subtitle" + "}");
             }
             handleTasks(quest.tasks);
             handleRewards(quest.rewards.stream().toList());
