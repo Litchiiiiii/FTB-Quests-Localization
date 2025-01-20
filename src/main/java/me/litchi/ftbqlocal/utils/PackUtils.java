@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -28,7 +29,9 @@ public class PackUtils {
             FileUtils.write(packMcMeta, jsonOutput, StandardCharsets.UTF_8);
 
             try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(zipFileName))) {
-                addToZip("assets\\minecraft\\lang\\", file, zipOut);
+                for (File listFile : Objects.requireNonNull(file.listFiles())) {
+                    addToZip("assets\\minecraft\\lang\\", listFile, zipOut);
+                }
                 addToZip("", packMcMeta, zipOut);
 
                 System.out.println("Zip file created successfully!");
