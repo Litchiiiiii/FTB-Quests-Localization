@@ -205,7 +205,7 @@ public class BackPortUtils implements FtbQHandler {
                     log.info(hoverTextList.toString());
                     if (!hoverTextList.isEmpty()){
                         hoverTextList.forEach(hoverTextString ->{
-                            if (hoverTextString.contains("{")){
+                            if (hoverTextString.contains("image.hovertext")){
                                 String key = hoverTextString.replaceAll("[{}]", "");
                                 try {
                                     chapterImageHoverTextList.add(defaultJSON.get(key).getAsString());

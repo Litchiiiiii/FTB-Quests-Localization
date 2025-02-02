@@ -85,7 +85,7 @@ public class Handler implements FtbQHandler {
                         HandlerCounter.addImageNum();
                         String key = prefix+".image.hovertext"+HandlerCounter.getImageNum();
                         transKeys.put(key,hoverTextString);
-                        chapterImageHoverTextList.add("{" + key + "}");
+                        chapterImageHoverTextList.add(key);
                     });
                     hoverText.set(image,chapterImageHoverTextList);
                 }
