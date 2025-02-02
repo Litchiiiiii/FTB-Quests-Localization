@@ -59,7 +59,6 @@ public class FTBQLangConvert {
                                                         handler.handleQuests(chapter.getQuests());
                                                         HandlerCounter.addChapters();
                                                     });
-
                                                     File output = new File(parent, Constants.PackMCMeta.QUESTFOLDER);
                                                     questFile.writeDataFull(output.toPath());
                                                     questFile.writeDataFull(output2.toPath());

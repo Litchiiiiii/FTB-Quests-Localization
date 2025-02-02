@@ -1,7 +1,9 @@
 package me.litchi.ftbqlocal.handler.impl;
 
+import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.ftb.mods.ftbquests.quest.Chapter;
 import dev.ftb.mods.ftbquests.quest.ChapterGroup;
+import dev.ftb.mods.ftbquests.quest.ChapterImage;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.loot.RewardTable;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
@@ -10,6 +12,7 @@ import dev.ftb.mods.ftbquests.util.TextUtils;
 import me.litchi.ftbqlocal.handler.FtbQHandler;
 import me.litchi.ftbqlocal.service.impl.JSONService;
 import me.litchi.ftbqlocal.utils.HandlerCounter;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
 import java.lang.reflect.Field;
@@ -17,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+
+import static com.mojang.text2speech.Narrator.LOGGER;
 
 public class Handler implements FtbQHandler {
     private final TreeMap<String, String> transKeys = HandlerCounter.transKeys;
@@ -65,9 +70,30 @@ public class Handler implements FtbQHandler {
                     num++;
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw new RuntimeException(e);
+                LOGGER.info(e.getMessage());
             }
         }
+        List<ChapterImage> images = new ArrayList<>(chapter.getImages());
+        for (ChapterImage image : images) {
+            try {
+                Field hoverText = ChapterImage.class.getDeclaredField("hover");
+                hoverText.setAccessible(true);
+                List<String> hoverTextList = new ArrayList<>((List<String>)hoverText.get(image));
+                List<String> chapterImageHoverTextList = new ArrayList<>();
+                if (!hoverTextList.isEmpty()){
+                    hoverTextList.forEach(hoverTextString ->{
+                        HandlerCounter.addImageNum();
+                        String key = prefix+".image.hovertext"+HandlerCounter.getImageNum();
+                        transKeys.put(key,hoverTextString);
+                        chapterImageHoverTextList.add("{" + key + "}");
+                    });
+                    hoverText.set(image,chapterImageHoverTextList);
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                LOGGER.info(e.getMessage());
+            }
+        }
+        HandlerCounter.setImageNum(0);
     }
 
     private void handleTasks(List<Task> tasks) {

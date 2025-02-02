@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 
+import static com.mojang.text2speech.Narrator.LOGGER;
 import static me.litchi.ftbqlocal.commands.FTBQLangConvert.originalLangCode;
 
 public class BackPortUtils implements FtbQHandler {
@@ -34,6 +35,8 @@ public class BackPortUtils implements FtbQHandler {
     private static final BackPortUtils backportU = new BackPortUtils();
     private static final Map<Long,List<String>> newdescMap = new HashMap<>();
     private static final Map<Long,List<String>> chapterSubMap = new HashMap<>();
+    private static final Map<Long,List<ChapterImage>> chapterImageList = new HashMap<>();
+    private static final Map<String,List<String>> hoverTextMap = new HashMap<>();
     public static void backport(String langStr){
 
         try {
@@ -47,10 +50,24 @@ public class BackPortUtils implements FtbQHandler {
             if (langStr.equals("en_us")){
                 newdescMap.clear();
                 chapterSubMap.clear();
+                chapterImageList.clear();
                 questFile.forAllQuests(quest -> {
                     newdescMap.put(quest.id,new ArrayList<>(quest.getRawDescription()));
                 });
                 questFile.forAllChapters(chapter -> {
+                    chapterImageList.put(chapter.id,new ArrayList<>(chapter.getImages()));
+                    try {
+                        Field hoverText = ChapterImage.class.getDeclaredField("hover");
+                        hoverText.setAccessible(true);
+                        long num = 0L;
+                        for (ChapterImage image : chapter.getImages()) {
+                            List<String> textList = (List<String>)hoverText.get(image);
+                            hoverTextMap.put(String.valueOf(chapter.id)+ num, textList);
+                            num++;
+                        }
+                    } catch (NoSuchFieldException | IllegalAccessException e) {
+                        log.info(e.getMessage());
+                    }
                     chapterSubMap.put(chapter.id,new ArrayList<>(chapter.getRawSubtitle()));
                 });
             }
@@ -176,6 +193,44 @@ public class BackPortUtils implements FtbQHandler {
             if (!subtitleList.isEmpty()){
                 rawSubtitle.set(chapter,subtitleList);
             }
+            List<ChapterImage> images = new ArrayList<>(chapterImageList.get(chapter.id));
+            Field hoverText = ChapterImage.class.getDeclaredField("hover");
+            hoverText.setAccessible(true);
+            long num = 0L;
+            for (ChapterImage image : images) {
+                try {
+                    List<String> chapterImageHoverTextList = new ArrayList<>();
+                    List<String> hoverTextList = hoverTextMap.get(String.valueOf(chapter.id )+ num);
+                    num++;
+                    log.info(hoverTextList.toString());
+                    if (!hoverTextList.isEmpty()){
+                        hoverTextList.forEach(hoverTextString ->{
+                            if (hoverTextString.contains("{")){
+                                String key = hoverTextString.replaceAll("[{}]", "");
+                                try {
+                                    chapterImageHoverTextList.add(defaultJSON.get(key).getAsString());
+                                }catch (Exception e){
+                                    try {
+                                        chapterImageHoverTextList.add(enJson.get(key).getAsString());
+                                    }catch (Exception e1){
+                                        log.info("chapter ImageHoverText is not in kubejs!");
+                                    }
+                                }
+                            }else {
+                                chapterImageHoverTextList.add(hoverTextString);
+                            }
+                        });
+                        if (!chapterImageHoverTextList.isEmpty()){
+                            hoverText.set(image,chapterImageHoverTextList);
+                        }
+                    }
+                } catch (IllegalAccessException e) {
+                    LOGGER.info(e.getMessage());
+                }
+            }
+            Field images1 = Chapter.class.getDeclaredField("images");
+            images1.setAccessible(true);
+            images1.set(chapter,images);
         }catch (Exception e){
             log.info(e.getMessage());
         }
