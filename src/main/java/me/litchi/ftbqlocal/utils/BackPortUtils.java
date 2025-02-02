@@ -33,6 +33,8 @@ public class BackPortUtils implements FtbQHandler {
     private static final BackPortUtils backportU = new BackPortUtils();
     private static final Map<Long,List<String>> newdescMap = new HashMap<>();
     private static final Map<Long,List<String>> chapterSubMap = new HashMap<>();
+    private static final Map<Long,List<ChapterImage>> chapterImageList = new HashMap<>();
+    private static final Map<String,List<String>> hoverTextMap = new HashMap<>();
     public static void backport(String langStr){
         try {
             enJson =JsonParser.parseString(FileUtils.readFileToString(new File(KUBEJS_LANG_DIR+"en_us.json"), StandardCharsets.UTF_8)).getAsJsonObject();
@@ -45,8 +47,16 @@ public class BackPortUtils implements FtbQHandler {
             if (langStr.equals("en_us")){
                 newdescMap.clear();
                 chapterSubMap.clear();
+                chapterImageList.clear();
                 questFile.getAllChapters().forEach(chapter -> {
                     chapterSubMap.put(chapter.id,new ArrayList<>(chapter.subtitle));
+                    chapterImageList.put(chapter.id,new ArrayList<>(chapter.images));
+                    long num = 0L;
+                    for (ChapterImage image : chapter.images) {
+                        List<String> textList = image.hover;
+                        hoverTextMap.put(String.valueOf(chapter.id)+ num, textList);
+                        num++;
+                    }
                     chapter.quests.forEach(quest -> {
                         newdescMap.put(quest.id,new ArrayList<>(quest.description));
                     });
@@ -153,6 +163,7 @@ public class BackPortUtils implements FtbQHandler {
             }
             Field rawSubtitle = chapter.getClass().getDeclaredField("subtitle");
             rawSubtitle.setAccessible(true);
+
             //List<String> subtitle = new ArrayList<>(chapter.getRawSubtitle());
             List<String> subtitle = new ArrayList<>(chapterSubMap.get(chapter.id));
             List<String> subtitleList = new ArrayList<>();
@@ -175,6 +186,37 @@ public class BackPortUtils implements FtbQHandler {
             if (!subtitleList.isEmpty()){
                 rawSubtitle.set(chapter,subtitleList);
             }
+            List<ChapterImage> images = new ArrayList<>(chapterImageList.get(chapter.id));
+            long num = 0L;
+            for (ChapterImage image : images) {
+                List<String> chapterImageHoverTextList = new ArrayList<>();
+                List<String> hoverTextList = hoverTextMap.get(String.valueOf(chapter.id )+ num);
+                num++;
+                if (!hoverTextList.isEmpty()){
+                    hoverTextList.forEach(hoverTextString ->{
+                        if (hoverTextString.contains(".image.hovertext")){
+                            //String key = hoverTextString.replaceAll("[{}]", "");
+                            try {
+                                chapterImageHoverTextList.add(defaultJSON.get(hoverTextString).getAsString());
+                            }catch (Exception e){
+                                try {
+                                    chapterImageHoverTextList.add(enJson.get(hoverTextString).getAsString());
+                                }catch (Exception e1){
+                                    log.info("chapter ImageHoverText is not in kubejs!");
+                                }
+                            }
+                        }else {
+                            chapterImageHoverTextList.add(hoverTextString);
+                        }
+                    });
+                    if (!chapterImageHoverTextList.isEmpty()){
+                        image.hover = chapterImageHoverTextList;
+                    }
+                }
+            }
+            Field images1 = Chapter.class.getDeclaredField("images");
+            images1.setAccessible(true);
+            images1.set(chapter,images);
         }catch (Exception e){
             log.info(e.getMessage());
         }

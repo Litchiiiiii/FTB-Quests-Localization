@@ -2,6 +2,7 @@ package me.litchi.ftbqlocal.handler.impl;
 
 import dev.ftb.mods.ftbquests.quest.Chapter;
 import dev.ftb.mods.ftbquests.quest.ChapterGroup;
+import dev.ftb.mods.ftbquests.quest.ChapterImage;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.loot.RewardTable;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
@@ -55,6 +56,21 @@ public class Handler implements FtbQHandler {
                 num++;
             }
         }
+        List<ChapterImage> images = chapter.images;
+        List<String> newHoverList = new ArrayList<>();
+        for (ChapterImage image : images) {
+            List<String> hover = image.hover;
+            for (String hoverText : hover) {
+                HandlerCounter.addImageNum();
+                String key = prefix+".image.hovertext"+HandlerCounter.getImageNum();
+                transKeys.put(key,hoverText);
+                newHoverList.add(key);
+            }
+            hover.clear();
+            hover.addAll(newHoverList);
+            newHoverList.clear();
+        }
+        HandlerCounter.setImageNum(0);
     }
 
     private void handleTasks(List<Task> tasks) {

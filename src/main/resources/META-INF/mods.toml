@@ -3,7 +3,7 @@ loaderVersion="[40,)"
 license="MIT"
 [[mods]]
 modId="ftbquestlocalizer"
-version="2.1.0"
+version="3.1.0"
 displayName="FTB Quests Localizer"
 description=''' FTB Quests Localization Keys Converter.\nA Mod to export FTB Quest Files into Localization Files. '''
 

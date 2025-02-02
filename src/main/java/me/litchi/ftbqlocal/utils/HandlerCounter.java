@@ -15,6 +15,19 @@ public class HandlerCounter {
     private static int counter = 0;
     private static int description = 0;
     private static int image = 0;
+    private static int imageNum = 0;
+
+    public static int getImageNum() {
+        return imageNum;
+    }
+    public static void addImageNum() {
+        imageNum++;
+    }
+
+    public static void setImageNum(int imageNum) {
+        HandlerCounter.imageNum = imageNum;
+    }
+
     public static List<String> descList = new ArrayList<>();
 
     public static Logger log = FtbQuestLocalizerMod.log;
