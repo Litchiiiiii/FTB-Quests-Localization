@@ -3,10 +3,15 @@ loaderVersion="[40,)"
 license="MIT"
 [[mods]]
 modId="ftbquestlocalizer"
-version="3.1.0"
+version="3.1.1"
 displayName="FTB Quests Localizer"
-description=''' FTB Quests Localization Keys Converter.\nA Mod to export FTB Quest Files into Localization Files. '''
-
+description='''
+FTB Quests Localization Keys Converter
+A Mod to export FTB Quest Files into Localization Files
+'''
+logoFile="logo.png"
+credits="Bello,TheonlyTazz,Mrbysco,Horeak,YeraX7,ActiveRadar" #optional
+authors="Litchiiiiiii"
 [[dependencies.ftbquestlocalizer]]
     modId="forge"
     mandatory=true
