@@ -5,11 +5,11 @@ license="${mod_license}"
 modId="${mod_id}" #mandatory
 version="${mod_version}" #mandatory
 displayName="${mod_name}" #mandatory
-credits="Bello,TheonlyTazz" #optional
+credits="Bello,TheonlyTazz,YeraX7,ActiveRadar" #optional
 authors="${mod_authors}" #optional
 # displayTest="IGNORE_ALL_VERSION" # MATCH_VERSION is the default if nothing is specified (#optional)
 description='''${mod_description}'''
-
+logoFile = "assets/ftbquestlocalizer/textures/logo.png"
 [[dependencies.ftbquestlocalizer]]
 modId="forge"
 mandatory=true
