@@ -10,7 +10,7 @@ public class Constants {
         public static final int PACKFORMAT = 8;
         public static final String FILEPATH = "pack.mcmeta";// Output file path
         public static final String OUTPUTFOLDER = "FTBLang";
-        public static final String KUBEJSFOLDER = "kubejs\\assets\\ftbquests\\lang\\";
+        public static final String KUBEJSFOLDER = "kubejs\\assets\\ftbquestlocalizer\\lang\\";
         public static final String QUESTFOLDER = "config\\ftbquests\\quests\\";
         public static final String BACKUPFOLDER = "backup\\ftbquests\\quests";
         public static final String KUBEJSBACKUPFOLDER = "backup\\"+KUBEJSFOLDER;

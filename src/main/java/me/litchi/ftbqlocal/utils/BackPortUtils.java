@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
@@ -120,10 +121,10 @@ public class BackPortUtils implements FtbQHandler {
     public void handleRewardTables(List<RewardTable> rewardTables) {
         rewardTables.forEach(rewardTable -> {
             try {
-                rewardTable.title = defaultJSON.get(rewardTable.title.replaceAll("[{}]","")).getAsString();
+                rewardTable.title = defaultJSON.get(rewardTable.title.replaceAll("[{}]","")).getAsString().replace("%%","%");
             }catch (Exception e){
                 try {
-                    rewardTable.title = enJson.get(rewardTable.title.replaceAll("[{}]","")).getAsString();
+                    rewardTable.title = enJson.get(rewardTable.title.replaceAll("[{}]","")).getAsString().replace("%%","%");
                 }catch (Exception e1){
                     log.info("rewardTable title is not in kubejs!");
                 }
@@ -135,10 +136,10 @@ public class BackPortUtils implements FtbQHandler {
     public void handleChapterGroup(ChapterGroup chapterGroup) {
         if (chapterGroup.title.contains("{")){
             try {
-                chapterGroup.title = defaultJSON.get(chapterGroup.title.replaceAll("[{}]","")).getAsString();
+                chapterGroup.title = defaultJSON.get(chapterGroup.title.replaceAll("[{}]","")).getAsString().replace("%%","%");
             }catch (Exception e){
                 try {
-                    chapterGroup.title = enJson.get(chapterGroup.title.replaceAll("[{}]","")).getAsString();
+                    chapterGroup.title = enJson.get(chapterGroup.title.replaceAll("[{}]","")).getAsString().replace("%%","%");
                 }catch (Exception e1){
                     log.info("ChapterGroup is null");
                 }
@@ -152,10 +153,10 @@ public class BackPortUtils implements FtbQHandler {
         try {
             if (chapter.title.contains("{")){
                 try {
-                    chapter.title = (defaultJSON.get(chapter.title.replaceAll("[{}]","")).getAsString());
+                    chapter.title = (defaultJSON.get(chapter.title.replaceAll("[{}]","")).getAsString().replace("%%","%"));
                 }catch (Exception e){
                     try {
-                        chapter.title = (enJson.get(chapter.title.replaceAll("[{}]","")).getAsString());
+                        chapter.title = (enJson.get(chapter.title.replaceAll("[{}]","")).getAsString().replace("%%","%"));
                     }catch (Exception e1){
                         log.info("chapter title is not in kubejs!");
                     }
@@ -171,10 +172,10 @@ public class BackPortUtils implements FtbQHandler {
                 if (s.contains("{")){
                     String key = s.replaceAll("[{}]", "");
                     try {
-                        subtitleList.add(defaultJSON.get(key).getAsString());
+                        subtitleList.add(defaultJSON.get(key).getAsString().replace("%%","%"));
                     }catch (Exception e){
                         try {
-                            subtitleList.add(enJson.get(key).getAsString());
+                            subtitleList.add(enJson.get(key).getAsString().replace("%%","%"));
                         }catch (Exception e1){
                             log.info("chaptSubtitle is not in kubejs!");
                         }
@@ -197,10 +198,10 @@ public class BackPortUtils implements FtbQHandler {
                         if (hoverTextString.contains(".image.hovertext")){
                             //String key = hoverTextString.replaceAll("[{}]", "");
                             try {
-                                chapterImageHoverTextList.add(defaultJSON.get(hoverTextString).getAsString());
+                                chapterImageHoverTextList.add(defaultJSON.get(hoverTextString).getAsString().replace("%%","%"));
                             }catch (Exception e){
                                 try {
-                                    chapterImageHoverTextList.add(enJson.get(hoverTextString).getAsString());
+                                    chapterImageHoverTextList.add(enJson.get(hoverTextString).getAsString().replace("%%","%"));
                                 }catch (Exception e1){
                                     log.info("chapter ImageHoverText is not in kubejs!");
                                 }
@@ -227,10 +228,10 @@ public class BackPortUtils implements FtbQHandler {
         allQuests.forEach(quest -> {
             if (quest.title.contains("{")){
                 try {
-                    quest.title = (defaultJSON.get(quest.title.replaceAll("[{}]","")).getAsString());
+                    quest.title = (defaultJSON.get(quest.title.replaceAll("[{}]","")).getAsString().replace("%%","%"));
                 }catch (Exception e){
                     try {
-                        quest.title = (enJson.get(quest.title.replaceAll("[{}]","")).getAsString());
+                        quest.title = (enJson.get(quest.title.replaceAll("[{}]","")).getAsString().replace("%%","%"));
                     }catch (Exception e1){
                         log.info("questTitle is not in kubejs!");
                     }
@@ -238,10 +239,10 @@ public class BackPortUtils implements FtbQHandler {
             }
             if (quest.subtitle.contains("{")){
                 try {
-                    quest.subtitle = (defaultJSON.get(quest.subtitle.replaceAll("[{}]","")).getAsString());
+                    quest.subtitle = (defaultJSON.get(quest.subtitle.replaceAll("[{}]","")).getAsString().replace("%%","%"));
                 }catch (Exception e){
                     try{
-                        quest.subtitle = (enJson.get(quest.subtitle.replaceAll("[{}]","")).getAsString());
+                        quest.subtitle = (enJson.get(quest.subtitle.replaceAll("[{}]","")).getAsString().replace("%%","%"));
                     }catch (Exception e1){
                         log.info("questSubtitle is not in kubejs!");
                     }
@@ -251,13 +252,13 @@ public class BackPortUtils implements FtbQHandler {
                 quest.rewards
                         .stream()
                         .filter(reward -> reward.title.contains("{"))
-                        .forEach(reward -> reward.title = defaultJSON.get(reward.title.replaceAll("[{}]","")).getAsString());
+                        .forEach(reward -> reward.title = defaultJSON.get(reward.title.replaceAll("[{}]","")).getAsString().replace("%%","%"));
             }catch (Exception e){
                 try {
                     quest.rewards
                             .stream()
                             .filter(reward -> reward.title.contains("{"))
-                            .forEach(reward -> reward.title = (enJson.get(reward.title.replaceAll("[{}]","")).getAsString()));
+                            .forEach(reward -> reward.title = (enJson.get(reward.title.replaceAll("[{}]","")).getAsString().replace("%%","%")));
                 }catch (Exception e1){
                     log.info("questReward title is not in kubejs!");
                 }
@@ -266,13 +267,13 @@ public class BackPortUtils implements FtbQHandler {
                 quest.tasks
                         .stream()
                         .filter(task -> task.title.contains("{"))
-                        .forEach(task -> task.title = (defaultJSON.get(task.title.replaceAll("[{}]","")).getAsString()));
+                        .forEach(task -> task.title = (defaultJSON.get(task.title.replaceAll("[{}]","")).getAsString().replace("%%","%")));
             }catch (Exception e){
                 try {
                     quest.tasks
                             .stream()
                             .filter(task -> task.title.contains("{"))
-                            .forEach(task -> task.title = (enJson.get(task.title.replaceAll("[{}]","")).getAsString()));
+                            .forEach(task -> task.title = (enJson.get(task.title.replaceAll("[{}]","")).getAsString().replace("%%","%")));
                 }catch (Exception e1){
                     log.info("questReward title is not in kubejs!");
                 }
@@ -285,17 +286,35 @@ public class BackPortUtils implements FtbQHandler {
         });
     }
     private void handleQuestDescriptions(Long id) {
+        String rich_desc_regex = "\\s*[\\[{].*\"+.*[]}]\\s*";
+        Pattern rich_desc_pattern = Pattern.compile(rich_desc_regex);
         List<String> newDescList = new ArrayList<>(newdescMap.get(id));
         for (String desc : newDescList) {
                 if (desc.isBlank()) {
                     descList.add("");
+                } else if(rich_desc_pattern.matcher(desc).find()){
+                    Pattern pattern = Pattern.compile("ftbquests\\.chapter\\.[a-zA-Z0-9_]+\\.quest\\d+\\.[a-zA-Z_]+description\\d");
+                    Matcher matcher = pattern.matcher(desc);
+                    while (matcher.find()){
+                        try {
+                            desc = desc.replace(matcher.group(0),defaultJSON.get(matcher.group(0)).getAsString()).replace("translate","text").replace("%%","%");
+                        }catch (Exception e){
+                            try {
+                                desc = desc.replace(matcher.group(0),enJson.get(matcher.group(0)).getAsString()).replace("translate","text").replace("%%","%");
+                            }catch (Exception e1){
+                                log.info(e1.getMessage());
+                            }
+                        }
+
+                    }
+                    descList.add(desc);
                 } else if (desc.contains("ftbquests")){
                     String key = desc.replaceAll("[{}]","");
                     try {
-                        descList.add(defaultJSON.get(key).getAsString());
+                        descList.add(defaultJSON.get(key).getAsString().replace("%%","%"));
                     }catch (Exception e){
                         try {
-                            descList.add(enJson.get(key).getAsString());
+                            descList.add(enJson.get(key).getAsString().replace("%%","%"));
                         }catch (Exception e1) {
                             log.info(e1.getMessage());
                         }

@@ -23,7 +23,13 @@ public class HandlerCounter {
     public static void addImageNum() {
         imageNum++;
     }
-
+    public static String addPercent(String containPercent){
+        if (containPercent.contains("%%")||containPercent.contains("%%%")){
+            return containPercent;
+        }else {
+            return containPercent.replace("%", "%%");
+        }
+    }
     public static void setImageNum(int imageNum) {
         HandlerCounter.imageNum = imageNum;
     }

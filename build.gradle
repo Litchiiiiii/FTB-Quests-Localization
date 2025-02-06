@@ -17,7 +17,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.spongepowered.mixin'
 
-archivesBaseName = "ftbquestlocalizer-1.18.2-forge-3.1.1"
+archivesBaseName = "ftbquestlocalizer-1.18.2-forge-3.2.0"
 
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
@@ -67,13 +67,12 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18.2-40.1.68'
-    implementation fg.deobf("curse.maven:ftb-quests-forge-289412:3725771")
-
-    implementation fg.deobf("curse.maven:item-filters-309674:3875094")
-    implementation fg.deobf("curse.maven:architectury-api-419699:3893735")
-    implementation fg.deobf("curse.maven:ftb-library-forge-404465:3905972")
-    implementation fg.deobf("curse.maven:ftb-teams-forge-404468:3725501")
+    minecraft 'net.minecraftforge:forge:1.18.2-40.2.10'
+    implementation fg.deobf("curse.maven:ftb-quests-forge-289412:4760361")
+    implementation fg.deobf("curse.maven:item-filters-309674:4553322")
+    implementation fg.deobf("curse.maven:architectury-api-419699:5137931")
+    implementation fg.deobf("curse.maven:ftb-library-forge-404465:4396792")
+    implementation fg.deobf("curse.maven:ftb-teams-forge-404468:4579981")
 
 }
 
