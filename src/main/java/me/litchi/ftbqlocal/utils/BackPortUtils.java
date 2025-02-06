@@ -313,10 +313,10 @@ public class BackPortUtils implements FtbQHandler {
                 Matcher matcher = pattern.matcher(s);
                 while (matcher.find()){
                     try {
-                        s = s.replace(matcher.group(0),defaultJSON.get(matcher.group(0)).getAsString()).replace("translate","text");
+                        s = s.replace(matcher.group(0),defaultJSON.get(matcher.group(0)).getAsString()).replace("translate","text").replace("%%","%");
                     }catch (Exception e){
                         try {
-                            s = s.replace(matcher.group(0),enJson.get(matcher.group(0)).getAsString()).replace("translate","text");
+                            s = s.replace(matcher.group(0),enJson.get(matcher.group(0)).getAsString()).replace("translate","text").replace("%%","%");
                         }catch (Exception e1){
                             log.info(e1.getMessage());
                         }
@@ -327,10 +327,10 @@ public class BackPortUtils implements FtbQHandler {
                 if (s.contains("{")){
                     String key = s.replaceAll("[{}]","");
                     try {
-                        descList.add(defaultJSON.get(key).getAsString());
+                        descList.add(defaultJSON.get(key).getAsString().replace("%%","%"));
                     }catch (Exception e){
                         try {
-                            descList.add(enJson.get(key).getAsString());
+                            descList.add(enJson.get(key).getAsString().replace("%%","%"));
                         }catch (Exception e1){
                             log.info(e1.getMessage());
                         }

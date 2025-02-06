@@ -22,6 +22,8 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 import static com.mojang.text2speech.Narrator.LOGGER;
+import static me.litchi.ftbqlocal.utils.HandlerCounter.addPercent;
+import static me.litchi.ftbqlocal.utils.HandlerCounter.descList;
 
 public class Handler implements FtbQHandler {
     private final TreeMap<String, String> transKeys = HandlerCounter.transKeys;
@@ -30,7 +32,7 @@ public class Handler implements FtbQHandler {
     public void handleRewardTables(List<RewardTable> rewardTables) {
         rewardTables.forEach(rewardTable -> {
             HandlerCounter.addCounter();
-            transKeys.put("ftbquests.loot_table_"+rewardTable.id+".title", rewardTable.getRawTitle());
+            transKeys.put("ftbquests.loot_table_"+rewardTable.id+".title", addPercent(rewardTable.getRawTitle()));
             rewardTable.setRawTitle("{" + "ftbquests.loot_table_"+rewardTable.id+".title"+ "}");
         });
         HandlerCounter.setCounter(0);
@@ -40,7 +42,7 @@ public class Handler implements FtbQHandler {
     public void handleChapterGroup(ChapterGroup chapterGroup) {
         if(chapterGroup.getTitle() != null){
             if (!chapterGroup.getRawTitle().isEmpty()){
-                transKeys.put("ftbquests.chapter_groups_"+chapterGroup.id+".title", chapterGroup.getRawTitle());
+                transKeys.put("ftbquests.chapter_groups_"+chapterGroup.id+".title", addPercent(chapterGroup.getRawTitle()));
                 chapterGroup.setRawTitle("{" + "ftbquests.chapter_groups_"+chapterGroup.id+".title" + "}");
                 HandlerCounter.addCounter();
             }
@@ -52,7 +54,7 @@ public class Handler implements FtbQHandler {
         HandlerCounter.setPrefix("ftbquests.chapter."+chapter.getFilename());
         String prefix = HandlerCounter.getPrefix();
         if(chapter.getTitle() != null){
-            transKeys.put(prefix + ".title", chapter.getRawTitle());
+            transKeys.put(prefix + ".title", addPercent(chapter.getRawTitle()));
             chapter.setRawTitle("{" + prefix + ".title" + "}");
         }
         if(!chapter.getRawSubtitle().isEmpty()) {
@@ -64,7 +66,7 @@ public class Handler implements FtbQHandler {
                 List<String> rawSubList = new ArrayList<>();
                 for (String s : subtitle) {
                     String key = prefix + ".subtitle" + num;
-                    transKeys.put(key, s);
+                    transKeys.put(key, addPercent(s));
                     rawSubList.add("{" + key + "}");
                     rawSubtitle.set(chapter,rawSubList);
                     num++;
@@ -84,7 +86,7 @@ public class Handler implements FtbQHandler {
                     hoverTextList.forEach(hoverTextString ->{
                         HandlerCounter.addImageNum();
                         String key = prefix+".image.hovertext"+HandlerCounter.getImageNum();
-                        transKeys.put(key,hoverTextString);
+                        transKeys.put(key,addPercent(hoverTextString));
                         chapterImageHoverTextList.add(key);
                     });
                     hoverText.set(image,chapterImageHoverTextList);
@@ -99,8 +101,8 @@ public class Handler implements FtbQHandler {
     private void handleTasks(List<Task> tasks) {
         tasks.stream().filter(task -> !task.getRawTitle().isEmpty()).forEach(task -> {
             HandlerCounter.addCounter();
-            String textKey = HandlerCounter.getPrefix() + ".task_+"+task.id+".title";
-            transKeys.put(textKey, task.getRawTitle());
+            String textKey = HandlerCounter.getPrefix() + ".task_"+task.id+".title";
+            transKeys.put(textKey, addPercent(task.getRawTitle()));
             task.setRawTitle("{"+textKey+"}");
         });
         HandlerCounter.setCounter(0);
@@ -109,7 +111,7 @@ public class Handler implements FtbQHandler {
         rewards.stream().filter(reward -> !reward.getRawTitle().isEmpty()).forEach(reward -> {
             HandlerCounter.addCounter();
             String textKey = HandlerCounter.getPrefix() + ".reward_"+reward.id+".title";
-            transKeys.put(textKey, reward.getRawTitle());
+            transKeys.put(textKey, addPercent(reward.getRawTitle()));
             reward.setRawTitle("{"+textKey+"}");
         });
         HandlerCounter.setCounter(0);
@@ -123,12 +125,12 @@ public class Handler implements FtbQHandler {
             String prefix = HandlerCounter.getPrefix();
             if(quest.getTitle() != null){
                 if (!quest.getRawTitle().isEmpty()){
-                    transKeys.put(prefix + ".title", quest.getRawTitle());
+                    transKeys.put(prefix + ".title", addPercent(quest.getRawTitle()));
                     quest.setRawTitle("{" + prefix + ".title" + "}");
                 }
             }
             if(!quest.getRawSubtitle().isEmpty()){
-                transKeys.put(prefix + ".subtitle", quest.getRawSubtitle());
+                transKeys.put(prefix + ".subtitle", addPercent(quest.getRawSubtitle()));
                 quest.setRawSubtitle("{" + prefix + ".subtitle" + "}");
             }
             handleTasks(quest.getTasksAsList());
@@ -159,12 +161,12 @@ public class Handler implements FtbQHandler {
             else if(rich_desc_pattern.matcher(desc).find()){
                 HandlerCounter.addDescription();
                 Component parsedText = TextUtils.parseRawText(desc);
-                handleJSON.handleJSON(parsedText);
+                descList.add(handleJSON.handleJSON(parsedText));
             }
             else {
                 HandlerCounter.addDescription();
                 String textKey = HandlerCounter.getPrefix() + ".description" + HandlerCounter.getDescription();
-                transKeys.put(textKey, desc);
+                transKeys.put(textKey, addPercent(desc));
                 HandlerCounter.descList.add("{"+textKey+"}");
             }
         });
@@ -173,7 +175,7 @@ public class Handler implements FtbQHandler {
     }
     private void handleDescriptionImage(String desc){
         String imgKey = HandlerCounter.getPrefix() + ".image" + HandlerCounter.getImage();
-        transKeys.put(imgKey, desc);
+        transKeys.put(imgKey, addPercent(desc));
         HandlerCounter.descList.add("{" + imgKey + "}");
         HandlerCounter.addImage();
     }

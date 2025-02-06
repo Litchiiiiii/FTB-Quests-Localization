@@ -4,5 +4,5 @@ import net.minecraft.network.chat.Component;
 
 
 public interface FtbQService {
-    void handleJSON(Component parsedText);
+    String handleJSON(Component parsedText);
 }
